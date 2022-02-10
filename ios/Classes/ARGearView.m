@@ -397,32 +397,20 @@
 }
 
 - (void)takePictureFinished:(UIImage *)image {
-
-let directoryPath =  NSHomeDirectory().appending("/Documents/")
-        if !FileManager.default.fileExists(atPath: directoryPath) {
-            do {
-                try FileManager.default.createDirectory(at: NSURL.fileURL(withPath: directoryPath), withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                print(error)
-            }
-        }
-
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyyMMddhhmmss"
-
-        let filename = dateFormatter.string(from: Date()).appending(".jpg")
-        let filepath = directoryPath.appending(filename)
-        let url = NSURL.fileURL(withPath: filepath)
-        do {
-            try image.jpegData(compressionQuality: 1.0)?.write(to: url, options: .atomic)
-            return self.channel invokeMethod:@"takePictureCallback" arguments:String.init("/Documents/\(filename)"
-
-        } catch {
-            print(error)
-            print("file cant not be save at path \(filepath), with error : \(error)");
-            return self.channel invokeMethod:@"takePictureCallback" arguments:filePath
-        }
-    
+    NSData *jpgData = UIImageJPEGRepresentation(image, 1);
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsPath = [paths objectAtIndex:0]; //Get the docs directory
+    NSUUID *uuid = [NSUUID UUID];
+    NSString *idString = [uuid UUIDString];
+    NSMutableString *imageName = [NSMutableString stringWithString:idString];
+    [imageName appendString:@".jpg"];
+    NSString *filePath = [documentsPath stringByAppendingPathComponent: imageName]; //Add the file name
+    __weak ARGearView *weakSelf = self;
+    dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        //Background Thread
+        [jpgData writeToFile:filePath atomically:YES]; //Write the file
+        [weakSelf.channel invokeMethod:@"takePictureCallback" arguments:filePath];
+    });
 }
 
 - (void)recordVideoFinished:(NSDictionary *)videoInfo {
