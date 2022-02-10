@@ -294,7 +294,7 @@ class ARGearSessionView : FrameLayout {
                     object : MediaStoreUtil.OnMediaStoreCallback {
                         override fun onComplete() {
                             isShootingComplete = true
-                            methodChannel?.invokeMethod("takePictureCallback", "success")
+                            methodChannel?.invokeMethod("takePictureCallback", path)
                         }
                 })
             } else {
